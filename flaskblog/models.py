@@ -1,14 +1,23 @@
-from flaskblog import db
+from flaskblog import db, login_manager
+from flask_login import UserMixin
 from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column
 
 
-class User(db.Model):
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
-    password = db.Column(db.String(60), nullable=False)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+class User(db.Model, UserMixin):
+
+    id:Mapped[int] = mapped_column(primary_key=True)
+    username:Mapped[str] = mapped_column(unique=True, nullable=False)
+    email:Mapped[str] = mapped_column(unique=True, nullable=False)
+    image_file:Mapped[str] = mapped_column(nullable=False, default='default.jpg')
+    password:Mapped[str] = mapped_column(nullable=False)
     posts = db.relationship("Post", backref="author", lazy=True)
 
     def __repr__(self):
@@ -25,3 +34,52 @@ class Post(db.Model):
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # class User(db.Model):
+
+#     id = db.Column(db.Integer, primary_key=True)
+#     username = db.Column(db.String(20), unique=True, nullable=False)
+#     email = db.Column(db.String(120), unique=True, nullable=False)
+#     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+#     password = db.Column(db.String(60), nullable=False)
+#     posts = db.relationship("Post", backref="author", lazy=True)
+
+#     def __repr__(self):
+#         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
