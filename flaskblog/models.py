@@ -1,7 +1,9 @@
-from flaskblog import db, login_manager
+import json
+from flaskblog import db, login_manager, app
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Mapped, mapped_column
+from itsdangerous.url_safe import URLSafeTimedSerializer
 
 
 
@@ -19,6 +21,24 @@ class User(db.Model, UserMixin):
     image_file:Mapped[str] = mapped_column(nullable=False, default='default.jpg')
     password:Mapped[str] = mapped_column(nullable=False)
     posts = db.relationship("Post", backref="author", lazy=True)
+
+    def get_reset_token(self, expires_sec=1800):
+        SECRET_KEY = app.config["SECRET_KEY"]
+        serializer = URLSafeTimedSerializer(SECRET_KEY, salt = "reset")
+        expiration_time = (datetime.utcnow() + timedelta(seconds=expires_sec)).isoformat()
+        payload = {"user_id": 1, "exp": expiration_time}
+        json_payload = json.dumps(payload)
+        token = serializer.dumps(json_payload)
+        return token
+    
+    @staticmethod
+    def verify_reset_token(token):
+        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'], salt= "reset")
+        try:
+            user_id = serializer.loads(token)['user_id']
+        except:
+            return None
+        return User.query.get(user_id)    
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
