@@ -1,11 +1,10 @@
 import json
-from flaskblog import db, login_manager, app
+from flask import current_app
+from flaskblog import db, login_manager
 from flask_login import UserMixin
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Mapped, mapped_column
 from itsdangerous.url_safe import URLSafeTimedSerializer
-
-
 
 
 @login_manager.user_loader
@@ -23,7 +22,7 @@ class User(db.Model, UserMixin):
     posts = db.relationship("Post", backref="author", lazy=True)
 
     def get_reset_token(self, expires_sec=1800):
-        SECRET_KEY = app.config["SECRET_KEY"]
+        SECRET_KEY = current_app.config["SECRET_KEY"]
         serializer = URLSafeTimedSerializer(SECRET_KEY, salt = "reset")
         expiration_time = (datetime.utcnow() + timedelta(seconds=expires_sec)).isoformat()
         payload = {"user_id": 1, "exp": expiration_time}
@@ -33,7 +32,7 @@ class User(db.Model, UserMixin):
     
     @staticmethod
     def verify_reset_token(token):
-        serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'], salt= "reset")
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'], salt= "reset")
         try:
             user_id = serializer.loads(token)['user_id']
         except:
